@@ -1,0 +1,990 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Pilgrim — Brand Performance Dashboard</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&family=Playfair+Display:wght@700&display=swap');
+
+  :root {
+    --bg: #F9F7F4;
+    --surface: #FFFFFF;
+    --surface2: #F3F0EB;
+    --ink: #1A1614;
+    --ink2: #6B6460;
+    --ink3: #9E9590;
+    --gold: #C8974A;
+    --gold-light: #F5E6CC;
+    --rose: #C45B6D;
+    --rose-light: #F8E8EB;
+    --teal: #2D7A6E;
+    --teal-light: #D4EDE9;
+    --plum: #6B3F6E;
+    --plum-light: #EDE4EE;
+    --border: #E8E2DB;
+    --radius: 12px;
+    --shadow: 0 2px 12px rgba(26,22,20,0.07);
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--bg);
+    color: var(--ink);
+    min-height: 100vh;
+  }
+
+  /* ── HEADER ── */
+  .header {
+    background: var(--ink);
+    padding: 20px 32px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+  }
+  .header-brand {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+  }
+  .logo-mark {
+    width: 38px; height: 38px;
+    background: var(--gold);
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-family: 'Playfair Display', serif;
+    font-size: 18px;
+    color: var(--ink);
+    font-weight: 700;
+    flex-shrink: 0;
+  }
+  .header h1 {
+    font-family: 'Playfair Display', serif;
+    font-size: 20px;
+    color: #fff;
+    font-weight: 700;
+    letter-spacing: 0.3px;
+  }
+  .header-sub {
+    font-size: 12px;
+    color: #9E9590;
+    margin-top: 2px;
+  }
+  .header-meta {
+    display: flex; gap: 24px; align-items: center;
+  }
+  .period-badge {
+    background: rgba(255,255,255,0.08);
+    border: 1px solid rgba(255,255,255,0.15);
+    border-radius: 20px;
+    padding: 6px 14px;
+    font-size: 12px;
+    color: #C8C3BE;
+  }
+  .live-dot {
+    display: flex; align-items: center; gap: 6px;
+    font-size: 12px; color: var(--gold);
+  }
+  .dot {
+    width: 7px; height: 7px;
+    background: var(--gold);
+    border-radius: 50%;
+    animation: pulse 2s infinite;
+  }
+  @keyframes pulse {
+    0%,100% { opacity: 1; } 50% { opacity: 0.4; }
+  }
+
+  /* ── LAYOUT ── */
+  .main { padding: 28px 32px; max-width: 1400px; margin: 0 auto; }
+
+  /* ── SECTION LABELS ── */
+  .section-label {
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 1.2px;
+    text-transform: uppercase;
+    color: var(--ink3);
+    margin-bottom: 14px;
+    margin-top: 32px;
+  }
+  .section-label:first-of-type { margin-top: 0; }
+
+  /* ── KPI STRIP ── */
+  .kpi-grid {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 16px;
+    margin-bottom: 0;
+  }
+  .kpi-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 20px 22px;
+    box-shadow: var(--shadow);
+    position: relative;
+    overflow: hidden;
+  }
+  .kpi-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 3px;
+  }
+  .kpi-card.gold::before { background: var(--gold); }
+  .kpi-card.rose::before { background: var(--rose); }
+  .kpi-card.teal::before { background: var(--teal); }
+  .kpi-card.plum::before { background: var(--plum); }
+  .kpi-card.ink::before { background: var(--ink); }
+
+  .kpi-label {
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.8px;
+    text-transform: uppercase;
+    color: var(--ink3);
+    margin-bottom: 10px;
+  }
+  .kpi-value {
+    font-size: 28px;
+    font-weight: 700;
+    color: var(--ink);
+    line-height: 1;
+    margin-bottom: 6px;
+  }
+  .kpi-sub {
+    font-size: 12px;
+    color: var(--ink3);
+  }
+  .kpi-badge {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 20px;
+    font-size: 11px;
+    font-weight: 600;
+    margin-top: 4px;
+  }
+  .badge-gold { background: var(--gold-light); color: #8B6320; }
+  .badge-teal { background: var(--teal-light); color: #1A5047; }
+  .badge-rose { background: var(--rose-light); color: #8B2F3F; }
+
+  /* ── CHARTS GRID ── */
+  .charts-row {
+    display: grid;
+    gap: 16px;
+    margin-top: 0;
+  }
+  .charts-row.two-col { grid-template-columns: 1.4fr 1fr; }
+  .charts-row.three-col { grid-template-columns: 1fr 1fr 1fr; }
+  .charts-row.split-60-40 { grid-template-columns: 1.5fr 1fr; }
+
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 22px 24px;
+    box-shadow: var(--shadow);
+  }
+  .card-title {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--ink);
+    margin-bottom: 4px;
+  }
+  .card-sub {
+    font-size: 12px;
+    color: var(--ink3);
+    margin-bottom: 18px;
+  }
+
+  /* ── CHANNEL BARS ── */
+  .channel-list { display: flex; flex-direction: column; gap: 12px; }
+  .channel-item { display: flex; flex-direction: column; gap: 4px; }
+  .channel-meta {
+    display: flex; justify-content: space-between; align-items: center;
+  }
+  .channel-name {
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--ink);
+    display: flex; align-items: center; gap: 8px;
+  }
+  .ch-icon {
+    width: 22px; height: 22px;
+    border-radius: 6px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 11px;
+    flex-shrink: 0;
+  }
+  .ch-app { background: var(--teal-light); color: var(--teal); }
+  .ch-insta { background: #FCE7F0; color: #D63384; }
+  .ch-web { background: var(--plum-light); color: var(--plum); }
+  .ch-whatsapp { background: #E6F4EA; color: #1A7C3E; }
+  .ch-amazon { background: #FFF3CC; color: #CC8800; }
+
+  .channel-revenue { font-size: 13px; font-weight: 600; color: var(--ink); }
+  .channel-pct { font-size: 11px; color: var(--ink3); }
+  .bar-track {
+    height: 6px;
+    background: var(--surface2);
+    border-radius: 3px;
+    overflow: hidden;
+  }
+  .bar-fill {
+    height: 100%;
+    border-radius: 3px;
+    transition: width 0.8s ease;
+  }
+  .fill-app { background: var(--teal); }
+  .fill-insta { background: #D63384; }
+  .fill-web { background: var(--plum); }
+  .fill-wa { background: #25D366; }
+  .fill-amz { background: #FF9900; }
+
+  /* ── PRODUCT TABLE ── */
+  .product-table { width: 100%; border-collapse: collapse; }
+  .product-table th {
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.8px;
+    text-transform: uppercase;
+    color: var(--ink3);
+    padding: 0 10px 10px 10px;
+    text-align: left;
+    border-bottom: 1px solid var(--border);
+  }
+  .product-table td {
+    padding: 10px;
+    font-size: 13px;
+    color: var(--ink);
+    border-bottom: 1px solid var(--surface2);
+    vertical-align: middle;
+  }
+  .product-table tr:last-child td { border-bottom: none; }
+  .hero-tag {
+    display: inline-block;
+    font-size: 9px;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    padding: 2px 6px;
+    border-radius: 4px;
+    background: var(--gold-light);
+    color: #8B6320;
+    margin-left: 6px;
+  }
+  .margin-pill {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 20px;
+    font-size: 11px;
+    font-weight: 600;
+    background: var(--teal-light);
+    color: var(--teal);
+  }
+  .rank-num {
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--ink3);
+    width: 20px;
+    display: inline-block;
+  }
+
+  /* ── CANVAS SIZE CONTROL ── */
+  .chart-wrap { position: relative; }
+
+  /* ── INSIGHT CARDS ── */
+  .insight-strip {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
+  }
+  .insight-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 18px 20px;
+    box-shadow: var(--shadow);
+    display: flex;
+    gap: 14px;
+    align-items: flex-start;
+  }
+  .insight-icon {
+    width: 36px; height: 36px;
+    border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 18px;
+    flex-shrink: 0;
+    margin-top: 2px;
+  }
+  .i-gold { background: var(--gold-light); }
+  .i-rose { background: var(--rose-light); }
+  .i-teal { background: var(--teal-light); }
+  .insight-title {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--ink);
+    margin-bottom: 4px;
+  }
+  .insight-body {
+    font-size: 12px;
+    color: var(--ink2);
+    line-height: 1.5;
+  }
+
+  /* ── CITY ROW ── */
+  .city-list { display: flex; flex-direction: column; gap: 10px; }
+  .city-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 14px;
+    background: var(--surface2);
+    border-radius: 8px;
+    font-size: 13px;
+  }
+  .city-rank { font-weight: 700; color: var(--gold); min-width: 24px; }
+  .city-name { font-weight: 500; color: var(--ink); flex: 1; padding-left: 8px; }
+  .city-state { font-size: 11px; color: var(--ink3); }
+  .city-rev { font-weight: 600; color: var(--ink); }
+
+  /* ── CUSTOMER SEGMENT ── */
+  .segment-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+  .seg-card {
+    border-radius: 10px;
+    padding: 14px 16px;
+    text-align: center;
+  }
+  .seg-gold { background: var(--gold-light); }
+  .seg-silver { background: #F0F0F0; }
+  .seg-bronze { background: #FBF0E8; }
+  .seg-label { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.8px; color: var(--ink3); margin-bottom: 4px; }
+  .seg-count { font-size: 24px; font-weight: 700; color: var(--ink); }
+  .seg-sub { font-size: 11px; color: var(--ink3); margin-top: 2px; }
+
+  /* ── ACQUISITION ── */
+  .acq-list { display: flex; flex-direction: column; gap: 8px; }
+  .acq-item {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 8px 12px;
+    border-radius: 8px;
+    background: var(--surface2);
+    font-size: 13px;
+  }
+  .acq-channel { font-weight: 500; color: var(--ink); }
+  .acq-count { font-size: 12px; color: var(--ink3); margin: 0 auto 0 12px; }
+  .acq-rev-tag { font-weight: 600; font-size: 12px; }
+
+  /* ── FOOTER ── */
+  .footer {
+    background: var(--ink);
+    color: #6B6460;
+    text-align: center;
+    font-size: 12px;
+    padding: 18px 32px;
+    margin-top: 40px;
+  }
+  .footer span { color: var(--gold); }
+
+  /* ── DISCOUNT NOTE ── */
+  .note-bar {
+    background: var(--gold-light);
+    border: 1px solid var(--gold);
+    border-radius: 8px;
+    padding: 10px 16px;
+    font-size: 12px;
+    color: #7A5A20;
+    margin-top: 0;
+    margin-bottom: 0;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  /* ── RESPONSIVE: TABLET (≤900px) ── */
+  @media (max-width: 900px) {
+    .main { padding: 20px 20px; }
+
+    .kpi-grid {
+      grid-template-columns: repeat(3, 1fr);
+    }
+
+    .charts-row.two-col,
+    .charts-row.split-60-40 {
+      grid-template-columns: 1fr;
+    }
+
+    .charts-row.three-col {
+      grid-template-columns: 1fr 1fr;
+    }
+
+    .insight-strip {
+      grid-template-columns: 1fr 1fr;
+    }
+
+    .header-meta { gap: 12px; }
+    .period-badge { font-size: 11px; padding: 5px 10px; }
+  }
+
+  /* ── RESPONSIVE: MOBILE (≤600px) ── */
+  @media (max-width: 600px) {
+    /* Header */
+    .header {
+      padding: 14px 16px;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+    .header h1 { font-size: 17px; }
+    .header-sub { font-size: 11px; }
+    .header-meta { gap: 8px; }
+    .period-badge { font-size: 10px; padding: 4px 9px; }
+    .live-dot { font-size: 11px; }
+
+    /* Main layout */
+    .main { padding: 14px 14px; }
+    .section-label { margin-top: 22px; font-size: 10px; }
+
+    /* KPI grid: 2 columns on mobile */
+    .kpi-grid {
+      grid-template-columns: repeat(2, 1fr);
+      gap: 10px;
+    }
+    .kpi-card { padding: 14px 14px; }
+    .kpi-value { font-size: 22px; }
+    .kpi-sub { font-size: 11px; }
+
+    /* Charts: single column */
+    .charts-row.two-col,
+    .charts-row.three-col,
+    .charts-row.split-60-40 {
+      grid-template-columns: 1fr;
+    }
+
+    .card { padding: 16px 14px; }
+    .card-title { font-size: 13px; }
+    .card-sub { font-size: 11px; }
+
+    /* Chart heights reduced on mobile */
+    .chart-wrap[style*="height:240px"] { height: 200px !important; }
+    .chart-wrap[style*="height:260px"] { height: 200px !important; }
+    .chart-wrap[style*="height:230px"] { height: 190px !important; }
+
+    /* Product table: scrollable horizontally */
+    .card:has(.product-table) { overflow-x: auto; }
+    .product-table th,
+    .product-table td { font-size: 11px; padding: 8px 7px; white-space: nowrap; }
+    .hero-tag { font-size: 8px; padding: 1px 4px; }
+    .margin-pill { font-size: 10px; padding: 2px 6px; }
+
+    /* Insight cards: single column */
+    .insight-strip {
+      grid-template-columns: 1fr;
+    }
+    .insight-card { padding: 14px 14px; }
+    .insight-title { font-size: 12px; }
+    .insight-body { font-size: 11px; }
+    .insight-icon { width: 32px; height: 32px; font-size: 16px; }
+
+    /* City list */
+    .city-item { font-size: 12px; padding: 8px 10px; }
+
+    /* Segment grid */
+    .segment-grid { grid-template-columns: repeat(3, 1fr); gap: 8px; }
+    .seg-count { font-size: 20px; }
+
+    /* Acquisition list */
+    .acq-item { font-size: 11px; padding: 7px 10px; }
+    .acq-count { font-size: 11px; }
+
+    /* Note bar */
+    .note-bar { font-size: 11px; padding: 9px 12px; }
+
+    /* Footer */
+    .footer { font-size: 11px; padding: 14px 16px; }
+  }
+
+  /* ── RESPONSIVE: VERY SMALL (≤380px) ── */
+  @media (max-width: 380px) {
+    .kpi-grid { grid-template-columns: 1fr 1fr; gap: 8px; }
+    .kpi-value { font-size: 19px; }
+    .segment-grid { grid-template-columns: repeat(3, 1fr); gap: 6px; }
+    .seg-card { padding: 10px 8px; }
+    .header { padding: 12px 12px; }
+    .main { padding: 12px 10px; }
+  }
+</style>
+</head>
+<body>
+
+<header class="header">
+  <div class="header-brand">
+    <div class="logo-mark">P</div>
+    <div>
+      <h1>Pilgrim Analytics</h1>
+      <div class="header-sub">D2C Brand · Channel & Product Performance</div>
+    </div>
+  </div>
+  <div class="header-meta">
+    <div class="period-badge">Jan 2024 – Dec 2024</div>
+    <div class="live-dot"><span class="dot"></span>FY 2024</div>
+  </div>
+</header>
+
+<main class="main">
+
+  <!-- NOTE -->
+  <div class="note-bar" style="margin-bottom:20px;">
+    ⚠️ Revenue figures reflect channel-specific discounts applied at MRP. Profit computed against catalog cost prices. All 50 orders across 26 unique customers are included.
+  </div>
+
+  <!-- KPIs -->
+  <div class="section-label">Key Performance Indicators</div>
+  <div class="kpi-grid">
+    <div class="kpi-card gold">
+      <div class="kpi-label">Gross Revenue</div>
+      <div class="kpi-value">₹1.83L</div>
+      <div class="kpi-sub">₹1,83,357 across all channels</div>
+      <span class="kpi-badge badge-gold">50 orders</span>
+    </div>
+    <div class="kpi-card teal">
+      <div class="kpi-label">Gross Profit</div>
+      <div class="kpi-value">₹1.12L</div>
+      <div class="kpi-sub">₹1,12,371 after COGS</div>
+      <span class="kpi-badge badge-teal">61.3% margin</span>
+    </div>
+    <div class="kpi-card rose">
+      <div class="kpi-label">Top Channel</div>
+      <div class="kpi-value">App</div>
+      <div class="kpi-sub">₹78,386 · 42.8% of revenue</div>
+      <span class="kpi-badge badge-rose">15 orders</span>
+    </div>
+    <div class="kpi-card plum">
+      <div class="kpi-label">Top Product</div>
+      <div class="kpi-value" style="font-size:18px;">Vit C Serum</div>
+      <div class="kpi-sub">₹30,730 revenue · 18 units</div>
+      <span class="kpi-badge" style="background:var(--plum-light);color:var(--plum);">Hero SKU</span>
+    </div>
+    <div class="kpi-card ink">
+      <div class="kpi-label">Unique Customers</div>
+      <div class="kpi-value">26</div>
+      <div class="kpi-sub">Avg ₹7,052 / customer</div>
+      <span class="kpi-badge" style="background:rgba(255,255,255,0.12);color:#C8C3BE;">~2 orders avg</span>
+    </div>
+  </div>
+
+  <!-- REVENUE TREND + CHANNEL MIX -->
+  <div class="section-label">Revenue Trend & Channel Mix</div>
+  <div class="charts-row two-col">
+    <div class="card">
+      <div class="card-title">Monthly Revenue (2024)</div>
+      <div class="card-sub">Post-discount revenue by month · May & July peak months</div>
+      <div class="chart-wrap" style="height:240px;">
+        <canvas id="monthlyChart"></canvas>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-title">Channel Revenue Breakdown</div>
+      <div class="card-sub">Contribution after channel-specific discounts</div>
+      <div class="channel-list" style="margin-top:4px;">
+        <div class="channel-item">
+          <div class="channel-meta">
+            <div class="channel-name"><span class="ch-icon ch-app">📱</span>App</div>
+            <div><span class="channel-revenue">₹78,386</span> <span class="channel-pct">42.8%</span></div>
+          </div>
+          <div class="bar-track"><div class="bar-fill fill-app" style="width:100%"></div></div>
+        </div>
+        <div class="channel-item">
+          <div class="channel-meta">
+            <div class="channel-name"><span class="ch-icon ch-insta">📸</span>Instagram</div>
+            <div><span class="channel-revenue">₹44,410</span> <span class="channel-pct">24.2%</span></div>
+          </div>
+          <div class="bar-track"><div class="bar-fill fill-insta" style="width:56.7%"></div></div>
+        </div>
+        <div class="channel-item">
+          <div class="channel-meta">
+            <div class="channel-name"><span class="ch-icon ch-web">🌐</span>Website</div>
+            <div><span class="channel-revenue">₹25,920</span> <span class="channel-pct">14.1%</span></div>
+          </div>
+          <div class="bar-track"><div class="bar-fill fill-web" style="width:33.1%"></div></div>
+        </div>
+        <div class="channel-item">
+          <div class="channel-meta">
+            <div class="channel-name"><span class="ch-icon ch-whatsapp">💬</span>WhatsApp</div>
+            <div><span class="channel-revenue">₹20,636</span> <span class="channel-pct">11.3%</span></div>
+          </div>
+          <div class="bar-track"><div class="bar-fill fill-wa" style="width:26.3%"></div></div>
+        </div>
+        <div class="channel-item">
+          <div class="channel-meta">
+            <div class="channel-name"><span class="ch-icon ch-amazon">📦</span>Amazon</div>
+            <div><span class="channel-revenue">₹14,005</span> <span class="channel-pct">7.6%</span></div>
+          </div>
+          <div class="bar-track"><div class="bar-fill fill-amz" style="width:17.9%"></div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- CATEGORY + PRODUCT PERFORMANCE -->
+  <div class="section-label">Category & Product Performance</div>
+  <div class="charts-row split-60-40">
+    <div class="card">
+      <div class="card-title">Top Products by Revenue</div>
+      <div class="card-sub">Post-discount net revenue · Hero products marked ★</div>
+      <div style="overflow-x:auto;-webkit-overflow-scrolling:touch;">
+      <table class="product-table">
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>Product</th>
+            <th>Category</th>
+            <th>Units</th>
+            <th>Revenue</th>
+            <th>Est. Margin</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><span class="rank-num">1</span></td>
+            <td>Vitamin C Serum <span class="hero-tag">Hero</span></td>
+            <td style="color:var(--ink3)">Skincare</td>
+            <td>18</td>
+            <td style="font-weight:600">₹30,730</td>
+            <td><span class="margin-pill">62%</span></td>
+          </tr>
+          <tr>
+            <td><span class="rank-num">2</span></td>
+            <td>Collagen Supplement <span class="hero-tag">Hero</span></td>
+            <td style="color:var(--ink3)">Wellness</td>
+            <td>16</td>
+            <td style="font-weight:600">₹20,429</td>
+            <td><span class="margin-pill">68%</span></td>
+          </tr>
+          <tr>
+            <td><span class="rank-num">3</span></td>
+            <td>Conditioner</td>
+            <td style="color:var(--ink3)">Haircare</td>
+            <td>11</td>
+            <td style="font-weight:600">₹14,299</td>
+            <td><span class="margin-pill">65%</span></td>
+          </tr>
+          <tr>
+            <td><span class="rank-num">4</span></td>
+            <td>Ashwagandha</td>
+            <td style="color:var(--ink3)">Wellness</td>
+            <td>11</td>
+            <td style="font-weight:600">₹14,100</td>
+            <td><span class="margin-pill">68%</span></td>
+          </tr>
+          <tr>
+            <td><span class="rank-num">5</span></td>
+            <td>Night Cream</td>
+            <td style="color:var(--ink3)">Skincare</td>
+            <td>10</td>
+            <td style="font-weight:600">₹13,541</td>
+            <td><span class="margin-pill">62%</span></td>
+          </tr>
+          <tr>
+            <td><span class="rank-num">6</span></td>
+            <td>Moisturizer</td>
+            <td style="color:var(--ink3)">Skincare</td>
+            <td>11</td>
+            <td style="font-weight:600">₹13,173</td>
+            <td><span class="margin-pill">62%</span></td>
+          </tr>
+          <tr>
+            <td><span class="rank-num">7</span></td>
+            <td>Hair Mask <span class="hero-tag">Hero</span></td>
+            <td style="color:var(--ink3)">Haircare</td>
+            <td>13</td>
+            <td style="font-weight:600">₹12,145</td>
+            <td><span class="margin-pill">65%</span></td>
+          </tr>
+          <tr>
+            <td><span class="rank-num">8</span></td>
+            <td>Vitamin D3</td>
+            <td style="color:var(--ink3)">Wellness</td>
+            <td>8</td>
+            <td style="font-weight:600">₹10,752</td>
+            <td><span class="margin-pill">68%</span></td>
+          </tr>
+        </tbody>
+      </table>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-title">Revenue by Category</div>
+      <div class="card-sub">Wellness & Skincare neck-and-neck at the top</div>
+      <div class="chart-wrap" style="height:260px;">
+        <canvas id="categoryChart"></canvas>
+      </div>
+    </div>
+  </div>
+
+  <!-- GEOGRAPHY + CUSTOMERS -->
+  <div class="section-label">Geography & Customer Intelligence</div>
+  <div class="charts-row three-col">
+    <div class="card">
+      <div class="card-title">Top Cities by Revenue</div>
+      <div class="card-sub">Jaipur leads with 23.4% of all revenue</div>
+      <div class="city-list">
+        <div class="city-item">
+          <span class="city-rank">1</span>
+          <span class="city-name">Jaipur <span class="city-state">RJ</span></span>
+          <span class="city-rev">₹42,863</span>
+        </div>
+        <div class="city-item">
+          <span class="city-rank">2</span>
+          <span class="city-name">Hyderabad <span class="city-state">TS</span></span>
+          <span class="city-rev">₹34,804</span>
+        </div>
+        <div class="city-item">
+          <span class="city-rank">3</span>
+          <span class="city-name">Chennai <span class="city-state">TN</span></span>
+          <span class="city-rev">₹18,785</span>
+        </div>
+        <div class="city-item">
+          <span class="city-rank">4</span>
+          <span class="city-name">Pune <span class="city-state">MH</span></span>
+          <span class="city-rev">₹16,896</span>
+        </div>
+        <div class="city-item">
+          <span class="city-rank">5</span>
+          <span class="city-name">Kolkata <span class="city-state">WB</span></span>
+          <span class="city-rev">₹14,014</span>
+        </div>
+        <div class="city-item">
+          <span class="city-rank">6</span>
+          <span class="city-name">Lucknow <span class="city-state">UP</span></span>
+          <span class="city-rev">₹12,489</span>
+        </div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-title">Customer Segments</div>
+      <div class="card-sub">By loyalty tier across 26 active customers</div>
+      <div class="segment-grid" style="margin-bottom:16px;">
+        <div class="seg-card seg-gold">
+          <div class="seg-label">Gold</div>
+          <div class="seg-count">8</div>
+          <div class="seg-sub">31% loyalty</div>
+        </div>
+        <div class="seg-card seg-silver">
+          <div class="seg-label">Silver</div>
+          <div class="seg-count">10</div>
+          <div class="seg-sub">60% loyalty</div>
+        </div>
+        <div class="seg-card seg-bronze">
+          <div class="seg-label">Bronze</div>
+          <div class="seg-count">8</div>
+          <div class="seg-sub">50% loyalty</div>
+        </div>
+      </div>
+      <div class="card-sub" style="margin-bottom:10px;">Acquisition by Channel</div>
+      <div class="acq-list">
+        <div class="acq-item">
+          <span class="acq-channel">Instagram</span>
+          <span class="acq-count">8 customers</span>
+          <span class="acq-rev-tag" style="color:#D63384">30.8%</span>
+        </div>
+        <div class="acq-item">
+          <span class="acq-channel">Google Ads</span>
+          <span class="acq-count">6 customers</span>
+          <span class="acq-rev-tag" style="color:var(--teal)">23.1%</span>
+        </div>
+        <div class="acq-item">
+          <span class="acq-channel">Organic</span>
+          <span class="acq-count">4 customers</span>
+          <span class="acq-rev-tag" style="color:var(--plum)">15.4%</span>
+        </div>
+        <div class="acq-item">
+          <span class="acq-channel">Influencer</span>
+          <span class="acq-count">3 customers</span>
+          <span class="acq-rev-tag" style="color:var(--rose)">11.5%</span>
+        </div>
+        <div class="acq-item">
+          <span class="acq-channel">Facebook / Referral</span>
+          <span class="acq-count">5 customers</span>
+          <span class="acq-rev-tag" style="color:var(--ink3)">19.2%</span>
+        </div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-title">Discount Leakage by Channel</div>
+      <div class="card-sub">Avg. discount rate per channel (product-level)</div>
+      <div class="chart-wrap" style="height:230px;">
+        <canvas id="discountChart"></canvas>
+      </div>
+    </div>
+  </div>
+
+  <!-- ANALYST INSIGHTS -->
+  <div class="section-label">Analyst Insights & Action Points</div>
+  <div class="insight-strip">
+    <div class="insight-card">
+      <div class="insight-icon i-teal">🚀</div>
+      <div>
+        <div class="insight-title">App is your Growth Engine</div>
+        <div class="insight-body">The App channel drives 42.8% of revenue (₹78K) with only a 5–10% avg. discount — far more margin-friendly than Amazon (15–22%). Double down on app-exclusive deals and push notifications to protect margin while scaling volume.</div>
+      </div>
+    </div>
+    <div class="insight-card">
+      <div class="insight-icon i-rose">⚠️</div>
+      <div>
+        <div class="insight-title">Amazon Eats Margin</div>
+        <div class="insight-body">Amazon generates the lowest revenue (₹14K, 7.6%) while carrying 15–22% discounts across SKUs. Consider rationalising the Amazon catalogue to only high-velocity products like Vitamin C Serum and Collagen Supplement.</div>
+      </div>
+    </div>
+    <div class="insight-card">
+      <div class="insight-icon i-gold">📍</div>
+      <div>
+        <div class="insight-title">Jaipur & Hyderabad Are Untapped</div>
+        <div class="insight-body">These two cities account for 43% of total revenue yet likely have room for localised campaigns. Consider region-specific influencer partnerships and WhatsApp retargeting in these metros to capture repeat purchases.</div>
+      </div>
+    </div>
+    <div class="insight-card">
+      <div class="insight-icon i-teal">💎</div>
+      <div>
+        <div class="insight-title">Wellness Rivals Skincare</div>
+        <div class="insight-body">Wellness (₹65.3K) and Skincare (₹64.7K) are almost equal contributors — an unusual mix for a beauty brand. Collagen Supplement alone brings ₹20.4K. Cross-sell Wellness bundles to Skincare buyers for LTV uplift.</div>
+      </div>
+    </div>
+    <div class="insight-card">
+      <div class="insight-icon i-rose">🎯</div>
+      <div>
+        <div class="insight-title">Vitamin C Serum is the Anchor SKU</div>
+        <div class="insight-body">With ₹30.7K revenue (16.8% of total), 18 units sold across all channels, and hero status, this SKU drives discovery. Bundle it with Night Cream or Face Wash to raise basket size — both are natural skincare pairings.</div>
+      </div>
+    </div>
+    <div class="insight-card">
+      <div class="insight-icon i-gold">📅</div>
+      <div>
+        <div class="insight-title">May & March Are Peak Months</div>
+        <div class="insight-body">May (₹42.4K) and March (₹25.1K) saw the highest volumes — likely driven by summer skincare prep and early-year buying. September was the lowest (₹1.3K). Plan inventory and ad spend spikes around these months in 2025.</div>
+      </div>
+    </div>
+  </div>
+
+</main>
+
+<footer class="footer">
+  Pilgrim Analytics Dashboard · FY 2024 · Built from <span>customers.csv · orders.csv · product_catalog.csv · product_pricing.csv</span> · Revenue figures are post-discount net of MRP
+</footer>
+
+<script>
+// ── MONTHLY REVENUE CHART ──
+const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+const monthlyData = [5128.27, 3912.30, 25144.85, 9610.73, 42430.98, 18771.30, 22988.66, 22760.21, 1326.64, 8963.36, 10945.53, 11374.03];
+
+const ctxM = document.getElementById('monthlyChart').getContext('2d');
+new Chart(ctxM, {
+  type: 'bar',
+  data: {
+    labels: months,
+    datasets: [{
+      label: 'Revenue (₹)',
+      data: monthlyData,
+      backgroundColor: monthlyData.map(v => v === Math.max(...monthlyData) ? '#C8974A' : '#2D7A6E22'),
+      borderColor: monthlyData.map(v => v === Math.max(...monthlyData) ? '#C8974A' : '#2D7A6E'),
+      borderWidth: 1.5,
+      borderRadius: 5,
+    }]
+  },
+  options: {
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: {
+      legend: { display: false },
+      tooltip: {
+        callbacks: {
+          label: ctx => '₹' + ctx.raw.toLocaleString('en-IN', {maximumFractionDigits:0})
+        }
+      }
+    },
+    scales: {
+      x: { grid: { display: false }, ticks: { font: { size: 11 }, color: '#9E9590' } },
+      y: {
+        grid: { color: '#F3F0EB' },
+        ticks: {
+          font: { size: 10 },
+          color: '#9E9590',
+          callback: v => '₹' + (v/1000).toFixed(0) + 'K'
+        }
+      }
+    }
+  }
+});
+
+// ── CATEGORY DOUGHNUT ──
+const ctxC = document.getElementById('categoryChart').getContext('2d');
+new Chart(ctxC, {
+  type: 'doughnut',
+  data: {
+    labels: ['Wellness', 'Skincare', 'Haircare', 'Makeup'],
+    datasets: [{
+      data: [65337.06, 64722.59, 38013.82, 15283.39],
+      backgroundColor: ['#2D7A6E', '#6B3F6E', '#C8974A', '#C45B6D'],
+      borderWidth: 0,
+      hoverOffset: 6
+    }]
+  },
+  options: {
+    responsive: true,
+    maintainAspectRatio: false,
+    cutout: '68%',
+    plugins: {
+      legend: {
+        position: 'bottom',
+        labels: { font: { size: 12 }, color: '#1A1614', padding: 14, usePointStyle: true, pointStyleWidth: 8 }
+      },
+      tooltip: {
+        callbacks: {
+          label: ctx => ' ₹' + ctx.raw.toLocaleString('en-IN', {maximumFractionDigits:0}) + ' (' + ((ctx.raw/183356.86)*100).toFixed(1) + '%)'
+        }
+      }
+    }
+  }
+});
+
+// ── DISCOUNT BAR CHART ──
+const ctxD = document.getElementById('discountChart').getContext('2d');
+new Chart(ctxD, {
+  type: 'bar',
+  data: {
+    labels: ['App', 'WhatsApp', 'Website', 'Instagram', 'Amazon'],
+    datasets: [{
+      label: 'Avg. Discount %',
+      data: [4.9, 7.2, 8.7, 10.8, 18.4],
+      backgroundColor: ['#2D7A6E', '#25D366', '#6B3F6E', '#D63384', '#FF9900'],
+      borderRadius: 5,
+      borderWidth: 0,
+    }]
+  },
+  options: {
+    responsive: true,
+    maintainAspectRatio: false,
+    indexAxis: 'y',
+    plugins: {
+      legend: { display: false },
+      tooltip: { callbacks: { label: ctx => ctx.raw + '% avg. discount' } }
+    },
+    scales: {
+      x: {
+        grid: { color: '#F3F0EB' },
+        ticks: { font: { size: 10 }, color: '#9E9590', callback: v => v + '%' },
+        max: 22
+      },
+      y: { grid: { display: false }, ticks: { font: { size: 12 }, color: '#1A1614' } }
+    }
+  }
+});
+</script>
+</body>
+</html>
